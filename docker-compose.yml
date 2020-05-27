@@ -1,0 +1,32 @@
+version: "3"
+services:
+  app:
+    container_name: fastapi_todo_app
+    build:
+      context: ./dockerbuild/app/
+    volumes:
+      - ./src:/work/todo
+    working_dir: /work
+    command: ["uvicorn", "--host", "0.0.0.0", "--port", "5000", "todo.main:app", "--reload"]
+    ports:
+      - ${APP_PORT}:5000
+
+  db:
+    container_name: fastapi_todo_db
+    build:
+      context: ./dockerbuild/db/
+    volumes:
+      - fastapi_todo:/var/lib/mysql
+      - ./dockerbuild/db/logs:/var/log/mysql
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - TZ=Asia/Tokyo
+    ports:
+      - ${MYSQL_PORT}:3306
+
+volumes:
+  fastapi_todo:
+    driver: local
