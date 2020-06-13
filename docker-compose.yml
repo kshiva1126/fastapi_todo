@@ -5,9 +5,9 @@ services:
     build:
       context: ./dockerbuild/app/
     volumes:
-      - ./src:/work/todo
+      - ./src:/work
     working_dir: /work
-    command: ["uvicorn", "--host", "0.0.0.0", "--port", "5000", "todo.main:app", "--reload"]
+    command: ["uvicorn", "--host", "0.0.0.0", "--port", "5000", "app.main:app", "--reload"]
     ports:
       - ${APP_PORT}:5000
 
