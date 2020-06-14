@@ -9,6 +9,8 @@ from typing import List
 from . import crud, models, schemas, utils
 from .database import engine, SessionLocal
 
+from starlette.middleware.cors import CORSMiddleware
+
 import uvicorn
 
 models.Base.metadata.create_all(bind=engine)
@@ -16,6 +18,14 @@ models.Base.metadata.create_all(bind=engine)
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 app = FastAPI()
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 # Dependency
 def get_db():
