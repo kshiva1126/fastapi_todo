@@ -60,27 +60,32 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
 def read_root():
     return {"Hello": "World"}
 
-@app.post("/user", response_model=schemas.User)
+@app.post("/user", response_model=schemas.Token)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_email(db=db, email=user.email)
     if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return crud.create_user(db=db, user=user)
+        raise HTTPException(status_code=400, detail={"email": "別のメールアドレスを入力してください"})
+
+    db_user = crud.get_user_by_name(db=db, name=user.name)
+    if db_user:
+        raise HTTPException(status_code=400, detail={"name": "別のユーザ名を入力してください"})
+    crud.create_user(db=db, user=user)
+
+    return authenticate_user(db=db, user=user)
 
 @app.post("/authenticate", response_model=schemas.Token)
 def authenticate_user(user: schemas.UserAuthenticate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_email(db=db, email=user.email)
-    print(db_user)
     if db_user is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Name not existed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"password": "メールアドレスまたはパスワードが間違っています"})
     else:
         is_password_correct = crud.check_name_password(db, user)
         if is_password_correct is False:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password is not correct")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"password": "メールアドレスまたはパスワードが間違っています"})
         else:
             access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
             access_token = utils.create_access_token(
-                data={"sub": user.name},
+                data={"sub": db_user.name},
                 expires_delta=access_token_expires
             )
             return {"access_token": access_token, "token_type": "Bearer"}
@@ -95,7 +100,6 @@ async def create_new_task(
 
 @app.get("/task", response_model=List[schemas.Task])
 async def get_all_tasks(
-    task: schemas.TaskBase,
     current_user: schemas.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -125,6 +129,15 @@ async def delete_task(
     db: Session = Depends(get_db)
 ):
     return crud.delete_task(db=db, task_id=task_id)
+
+@app.put("/done/{task_id}",response_model=schemas.Task)
+async def update_task(
+    task_id,
+    task: schemas.TaskBase,
+    current_user: schemas.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return crud.update_done(db=db, task=task, task_id=task_id)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -56,3 +56,9 @@ def delete_task(db: Session, task_id: int):
     db_task = get_task_by_id(db, task_id)
     db.delete(db_task)
     db.commit()
+
+def update_done(db: Session, task: schemas.TaskCreate, task_id: int):
+    db_task = get_task_by_id(db, task_id)
+    db_task.done = task.done
+    db.commit()
+    return db_task
