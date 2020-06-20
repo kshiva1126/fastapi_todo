@@ -27,6 +27,17 @@ services:
     ports:
       - ${MYSQL_PORT}:3306
 
+  db2:
+    container_name: fastapi_todo_postgres
+    image: postgres:10-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - PGPASSWORD=password
+      - POSTGRES_DB=fast_db
+
 volumes:
   fastapi_todo:
     driver: local
